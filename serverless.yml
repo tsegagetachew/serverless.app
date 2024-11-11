@@ -1,0 +1,13 @@
+service: my-serverless-app
+
+provider:
+  name: aws
+  runtime: python3.9
+
+functions:
+  webhook:
+    handler: handler.webhook
+    events:
+      - httpApi:
+          path: /webhook
+          method: post
