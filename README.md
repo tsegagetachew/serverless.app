@@ -37,7 +37,6 @@ service: serverless-github-bot
 
 Update the function name and configure HTTP trigger:
 
-yaml
 
 
 
