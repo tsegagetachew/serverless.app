@@ -20,3 +20,38 @@ functions:
         - Effect: Allow
           Action: "dynamodb:Scan"
           Resource: "*"
+
+
+resources:
+    Resources:
+        # Creates our SNS topic
+        eventTopic:
+            Type: AWS::SNS::Topic
+            Properties:
+                # Subscribes the SQS queue to the SNS topic
+                Subscription:
+                    - Protocol: sqs
+                      Endpoint: !GetAtt eventQueue.Arn
+        # Creates our SQS queue
+        eventQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: ${self:custom.queueName}
+        # Allows our SNS topic to publish to our SQS queue
+        SnsToSqsPolicy:
+            Type: AWS::SQS::QueuePolicy
+            Properties:
+                PolicyDocument:
+                    Version: "2012-10-17"
+                    Statement:
+                        - Sid: "Allow SNS publish to SQS"
+                          Effect: Allow
+                          Principal:
+                              Service: "sns.amazonaws.com"
+                          Resource: !GetAtt eventQueue.Arn
+                          Action: SQS:SendMessage
+                          Condition:
+                              ArnEquals:
+                                  aws:SourceArn: !Ref eventTopic
+                Queues:
+                    - Ref: eventQueue
