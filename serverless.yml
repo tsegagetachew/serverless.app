@@ -20,6 +20,23 @@ functions:
         - Effect: Allow
           Action: "dynamodb:Scan"
           Resource: "*"
+          provider:
+    name: aws
+    runtime: nodejs16.x
+    iamRoleStatements:
+        - Effect: Allow
+          Action: "dynamodb:Scan"
+          Resource: "*"
+        - Effect: Allow
+          Action:
+              - SQS:*
+          Resource:
+              - Fn::GetAtt: [eventQueue, Arn]
+        - Effect: Allow
+          Action:
+              - SNS:*
+          Resource:
+              - !Ref eventTopic
 
 
 resources:
@@ -55,3 +72,21 @@ resources:
                                   aws:SourceArn: !Ref eventTopic
                 Queues:
                     - Ref: eventQueue
+
+
+custom:
+    datadog:
+        apiKey: ${env:DD_API_KEY}
+        captureLambdaPayload: true
+    queueName: ${self:service}-${opt:stage, "dev"}-event-queue
+
+
+    functions:
+    webhook:
+        handler: handler.webhook
+        environment:
+            SNS_TOPIC_ARN: !Ref eventTopic
+        events:
+            - httpApi:
+                  path: /webhook
+                  method: post
